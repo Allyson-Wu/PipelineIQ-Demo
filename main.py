@@ -1,12 +1,28 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 import pandas as pd
 import io
+import os
+from supabase import create_client, Client
+from dotenv import load_dotenv
+
+# 載入 .env 檔案中的環境變數
+load_dotenv()
 
 app = FastAPI(
     title="PipelineIQ API",
     description="Cloud-native Data Quality & Pipeline Intelligence Platform",
     version="0.1.0"
 )
+
+# 載入 Supabase 設定
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise RuntimeError("找不到 SUPABASE_URL 或 SUPABASE_KEY，請檢查 .env 設定檔。")
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
 
 @app.get("/")
 def read_root():
@@ -15,6 +31,7 @@ def read_root():
         "platform": "PipelineIQ",
         "message": "PipelineIQ API is running"
     }
+
 
 @app.post("/api/v1/upload")
 async def upload_file(file: UploadFile = File(...)):
@@ -67,12 +84,28 @@ async def upload_file(file: UploadFile = File(...)):
             "null_ratios": null_ratios
         }
 
+        # ------------------- Save to Supabase -------------------
+        audit_data = {
+            "file_name": filename,
+            "total_rows": total_rows,
+            "total_columns": total_cols,
+            "health_score": health_score,
+            "duplicate_rows": duplicate_rows,
+            "null_counts": null_counts,
+            "null_ratios": null_ratios
+        }
+
+        db_response = supabase.table("quality_audits").insert(audit_data).execute()
+        audit_id = db_response.data[0]["id"] if db_response.data else None
+        # -----------------------------------------------------------
+
         return {
             "status": "success",
-            "message": "檔案上傳並完成資料品質檢測！",
+            "message": "檔案上傳完成，品質報告已成功寫入資料庫！",
+            "audit_id": audit_id,
             "metadata": metadata,
             "quality_report": quality_report
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"解析檔案時發生錯誤: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"處理或寫入資料庫時發生錯誤: {str(e)}")
