@@ -216,3 +216,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# 09162026
+# Local Test Files & Generation Scripts
+test_*
+make_test_files.py
+
+# Office / Excel Temporary Lock Files
+~$*.xlsx
+~$*.xls
