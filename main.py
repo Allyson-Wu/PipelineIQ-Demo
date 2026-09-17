@@ -11,7 +11,7 @@ app = FastAPI(
 @app.get("/")
 def read_root():
     return {
-        "status": "online", 
+        "status": "online",
         "platform": "PipelineIQ",
         "message": "PipelineIQ API is running"
     }
@@ -33,19 +33,45 @@ async def upload_file(file: UploadFile = File(...)):
         else:
             df = pd.read_excel(io.BytesIO(contents))
 
-        # 提取基礎 Metadata（元資料）
+        total_rows = len(df)
+        total_cols = len(df.columns)
+
+        # ------------------- Data Quality Engine -------------------
+        # 1. 統計各欄位的缺失值
+        null_counts = df.isnull().sum().to_dict()
+        null_ratios = {col: round(count / total_rows, 4) if total_rows > 0 else 0 
+                       for col, count in null_counts.items()}
+
+        # 2. 統計重複列數量
+        duplicate_rows = int(df.duplicated().sum())
+
+        # 3. 計算基礎 Data Health Score (資料健康分數)
+        avg_null_ratio = sum(null_ratios.values()) / total_cols if total_cols > 0 else 0
+        duplicate_ratio = duplicate_rows / total_rows if total_rows > 0 else 0
+        
+        health_score = max(0, round(100 - (avg_null_ratio * 50 + duplicate_ratio * 50), 2))
+        # -----------------------------------------------------------
+
         metadata = {
             "file_name": filename,
-            "total_rows": len(df),
-            "total_columns": len(df.columns),
+            "total_rows": total_rows,
+            "total_columns": total_cols,
             "column_names": list(df.columns),
             "data_types": {col: str(dtype) for col, dtype in df.dtypes.items()}
         }
 
+        quality_report = {
+            "health_score": health_score,
+            "duplicate_rows": duplicate_rows,
+            "null_counts": null_counts,
+            "null_ratios": null_ratios
+        }
+
         return {
             "status": "success",
-            "message": "檔案上傳並解析成功！",
-            "metadata": metadata
+            "message": "檔案上傳並完成資料品質檢測！",
+            "metadata": metadata,
+            "quality_report": quality_report
         }
 
     except Exception as e:
