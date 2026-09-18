@@ -11,7 +11,7 @@ load_dotenv()
 app = FastAPI(
     title="PipelineIQ API",
     description="Cloud-native Data Quality & Pipeline Intelligence Platform",
-    version="0.1.0"
+    version="1.0.0"  # 僅將版本號更新為 1.0.0 正式版
 )
 
 # 載入 Supabase 設定
@@ -109,3 +109,49 @@ async def upload_file(file: UploadFile = File(...)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"處理或寫入資料庫時發生錯誤: {str(e)}")
+
+
+# ==================== Day 8 新增的歷史查詢 API ====================
+
+@app.get("/api/v1/audits")
+def get_all_audits():
+    """
+    取得所有歷史審計紀錄列表（按建立時間由新到舊排序）
+    """
+    try:
+        response = supabase.table("quality_audits") \
+            .select("id, file_name, total_rows, total_columns, health_score, created_at") \
+            .order("created_at", desc=True) \
+            .execute()
+            
+        return {
+            "status": "success",
+            "count": len(response.data),
+            "data": response.data
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"查詢歷史紀錄失敗: {str(e)}")
+
+
+@app.get("/api/v1/audits/{audit_id}")
+def get_audit_by_id(audit_id: str):
+    """
+    依據 audit_id (UUID) 取得單筆詳細品質報告
+    """
+    try:
+        response = supabase.table("quality_audits") \
+            .select("*") \
+            .eq("id", audit_id) \
+            .execute()
+            
+        if not response.data:
+            raise HTTPException(status_code=404, detail=f"找不到 ID 為 {audit_id} 的審計紀錄。")
+            
+        return {
+            "status": "success",
+            "data": response.data[0]
+        }
+    except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=f"查詢單筆紀錄失敗: {str(e)}")
