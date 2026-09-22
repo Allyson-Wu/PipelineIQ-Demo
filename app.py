@@ -1,6 +1,8 @@
 import streamlit as st
 import requests
 import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
 
 # 後端 FastAPI 服務位址
 API_BASE_URL = "http://127.0.0.1:8000"
@@ -54,10 +56,54 @@ if page == "單檔檢測 (Upload)":
                         
                         st.divider()
                         
-                        # 顯示詳細資料
+                        # ==================== Day 12 新增：Plotly 視覺化圖表 ====================
+                        st.subheader("📈 品質視覺化分析 (Quality Visualizations)")
+                        chart_col1, chart_col2 = st.columns(2)
+                        
+                        # 圖表 1：Health Score 半圓形儀表盤 (Gauge Chart)
+                        with chart_col1:
+                            fig_gauge = go.Figure(go.Indicator(
+                                mode="gauge+number",
+                                value=health_score,
+                                domain={'x': [0, 1], 'y': [0, 1]},
+                                title={'text': "Data Health Score"},
+                                gauge={
+                                    'axis': {'range': [0, 100]},
+                                    'bar': {'color': "#1f77b4"},
+                                    'steps': [
+                                        {'range': [0, 50], 'color': "#ff4b4b"},
+                                        {'range': [50, 85], 'color': "#ffa800"},
+                                        {'range': [85, 100], 'color': "#21c354"}
+                                    ]
+                                }
+                            ))
+                            fig_gauge.update_layout(height=300, margin=dict(l=20, r=20, t=50, b=20))
+                            st.plotly_chart(fig_gauge, use_container_width=True)
+                            
+                        # 圖表 2：各欄位缺失率柱狀圖 (Bar Chart)
+                        null_ratios = res_data["quality_report"]["null_ratios"]
+                        with chart_col2:
+                            df_null_chart = pd.DataFrame({
+                                "Column": list(null_ratios.keys()),
+                                "Null Ratio (%)": [r * 100 for r in null_ratios.values()]
+                            })
+                            fig_bar = px.bar(
+                                df_null_chart, 
+                                x="Column", 
+                                y="Null Ratio (%)",
+                                title="各欄位缺失率分布 (%)",
+                                labels={"Column": "欄位名稱", "Null Ratio (%)": "缺失率 (%)"},
+                                color="Null Ratio (%)",
+                                color_continuous_scale="Reds"
+                            )
+                            fig_bar.update_layout(height=300, margin=dict(l=20, r=20, t=50, b=20))
+                            st.plotly_chart(fig_bar, use_container_width=True)
+                        
+                        st.divider()
+                        
+                        # 顯示詳細資料表格
                         st.subheader("📋 缺失值統計 (Null Counts & Ratios)")
                         null_counts = res_data["quality_report"]["null_counts"]
-                        null_ratios = res_data["quality_report"]["null_ratios"]
                         
                         # 將 JSON 轉為 DataFrame 呈現
                         df_nulls = pd.DataFrame({
