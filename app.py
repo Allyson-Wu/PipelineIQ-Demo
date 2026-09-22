@@ -119,7 +119,7 @@ if page == "單檔檢測 (Upload)":
                 except Exception as e:
                     st.error(f"無法連線至後端服務: {str(e)}")
 
-# ==================== 分頁 2：歷史審計紀錄 ====================
+# ==================== 分頁 2：歷史審計紀錄 (Day 13 新增品質趨勢折線圖) ====================
 elif page == "歷史審計紀錄 (History)":
     st.header("📜 歷史審計紀錄 (Audit History)")
     
@@ -136,7 +136,43 @@ elif page == "歷史審計紀錄 (History)":
                 if audits:
                     st.write(f"目前資料庫共儲存 **{res_data.get('count', 0)}** 筆審計紀錄：")
                     df_audits = pd.DataFrame(audits)
+
+                    # ==================== Day 13 新增：品質趨勢折線圖 ====================
+                    st.subheader("📈 歷史 Health Score 變化趨勢 (Quality Trend)")
                     
+                    # 確保 health_score 與時間欄位轉型正確，避開歷史空資料報錯
+                    df_audits["health_score_num"] = pd.to_numeric(df_audits.get("health_score", 0), errors="coerce").fillna(0.0)
+                    df_audits["created_at_dt"] = pd.to_datetime(df_audits.get("created_at"), errors="coerce")
+                    
+                    # 依時間升冪排序以繪製時間序列折線圖
+                    df_audits_sorted = df_audits.sort_values(by="created_at_dt", ascending=True)
+
+                    fig_trend = px.line(
+                        df_audits_sorted,
+                        x="created_at_dt",
+                        y="health_score_num",
+                        markers=True,
+                        text="health_score_num",
+                        title="歷次資料審計 Health Score 走勢圖",
+                        labels={"created_at_dt": "審計時間 (Time)", "health_score_num": "健康分數 (Health Score)"},
+                        hover_data=[c for c in ["file_name", "total_rows", "duplicate_rows"] if c in df_audits_sorted.columns]
+                    )
+                    
+                    fig_trend.update_traces(
+                        line=dict(width=3, color="#1f77b4"),
+                        marker=dict(size=8, color="#0d47a1"),
+                        textposition="top center"
+                    )
+                    fig_trend.update_layout(
+                        yaxis=dict(range=[0, 105]),
+                        height=380,
+                        margin=dict(l=20, r=20, t=50, b=20)
+                    )
+                    
+                    st.plotly_chart(fig_trend, use_container_width=True)
+
+                    st.divider()
+
                     # 調整顯示欄位名稱
                     df_audits_display = df_audits.rename(columns={
                         "id": "Audit ID",
@@ -147,7 +183,9 @@ elif page == "歷史審計紀錄 (History)":
                         "created_at": "檢測時間"
                     })
                     
-                    st.dataframe(df_audits_display, use_container_width=True)
+                    # 排除內部繪圖用的臨時欄位再展示表格
+                    display_cols = [c for c in df_audits_display.columns if c not in ["health_score_num", "created_at_dt"]]
+                    st.dataframe(df_audits_display[display_cols], use_container_width=True)
                 else:
                     st.warning("目前資料庫中無任何審計紀錄。")
             else:
