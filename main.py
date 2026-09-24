@@ -95,7 +95,9 @@ async def upload_file(file: UploadFile = File(...)):
             "null_ratios": null_ratios
         }
 
+        # 將組裝好的資料真正寫入 Supabase 中的 "quality_audits" table
         db_response = supabase.table("quality_audits").insert(audit_data).execute()
+        # 寫入成功後，Supabase 會自動生成一組 UUID (id)，這行把它抓出來回傳給前端
         audit_id = db_response.data[0]["id"] if db_response.data else None
         # -----------------------------------------------------------
 
