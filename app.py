@@ -3,6 +3,7 @@ import requests
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import json
 
 # 後端 FastAPI 服務位址
 API_BASE_URL = "http://127.0.0.1:8000"
@@ -230,6 +231,38 @@ elif page == "歷史審計紀錄 (History)":
                     # 排除內部繪圖用的臨時欄位再展示表格
                     display_cols = [c for c in df_audits_display.columns if c not in ["health_score_num", "created_at_dt"]]
                     st.dataframe(df_audits_display[display_cols], use_container_width=True)
+
+                    # ==================== Day 18 新增：單筆歷史紀錄調閱與下載 ====================
+                    st.divider()
+                    st.subheader("🔍 單筆審計報告調閱與 JSON 匯出 (Report Export)")
+
+                    # 建立選單選單選項列表 (格式: "檔案名稱 (Audit ID前8碼)")
+                    audit_options = {
+                        f"{record.get('file_name', 'Unkown')} ({str(record.get('id', ''))[:8]}...) - {record.get('created_at', '')[:10]}": record
+                        for record in audits
+                    }
+
+                    selected_option = st.selectbox("請選擇要調閱與匯出的審計紀錄：", list(audit_options.keys()))
+
+                    if selected_option:
+                        selected_audit = audit_options[selected_option]
+
+                        with st.expander("📋 檢視選定紀錄之完整 JSON 日誌 (JSON Log)", expanded=True):
+                            st.json(selected_audit)
+
+                        # 一鍵下載 JSON 按鈕
+                        json_str = json.dumps(selected_audit, indent=2, ensure_ascii=False)
+                        file_id_short = str(selected_audit.get("id", "audit"))[:8]
+                        file_name_clean = str(selected_audit.get("file_name", "report")).replace(".", "_")
+
+                        st.download_button(
+                            label="📥 下載此筆 JSON 審計報告",
+                            data=json_str,
+                            file_name=f"audit_report_{file_name_clean}_{file_id_short}.json",
+                            mime="application/json",
+                            type="secondary"
+                        )
+
                 else:
                     st.warning("目前資料庫中無任何審計紀錄。")
             else:
