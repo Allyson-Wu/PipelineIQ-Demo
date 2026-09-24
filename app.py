@@ -4,9 +4,10 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import json
+import os
 
 # 後端 FastAPI 服務位址
-API_BASE_URL = "http://127.0.0.1:8000"
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000")
 
 st.set_page_config(
     page_title="PipelineIQ - Data Quality Platform",
@@ -31,6 +32,56 @@ if page == "單檔與批次檢測 (Upload)":
         type=["csv", "xlsx", "xls"],
         accept_multiple_files=True
     )
+
+    # ==================== Day 19 新增：預設公開範例資料集 (Preset Demo Datasets) ====================
+    st.markdown("---")
+    st.subheader("💡 或是直接選擇內建公開範例資料集 (Preset Public Demo Datasets)")
+    st.caption("供招募官與評審免下載檔案、一鍵直接測試平台品質檢測能力")
+
+    DEMO_DIR = "demo_datasets"
+    preset_files = []
+    if os.path.exists(DEMO_DIR):
+        preset_files = [f for f in os.listdir(DEMO_DIR) if f.endswith(('.csv', '.xlsx', '.xls'))]
+
+    if preset_files:
+        selected_preset = st.selectbox("請選擇預載資料集：", ["-- 請選擇範例檔案 --"] + preset_files)
+        
+        if selected_preset != "-- 請選擇範例檔案 --":
+            if st.button(f"🚀 載入並分析 [{selected_preset}]", type="secondary"):
+                preset_path = os.path.join(DEMO_DIR, selected_preset)
+                with st.spinner("正在讀取範例資料集並送往 Data Quality Engine 解析中..."):
+                    try:
+                        with open(preset_path, "rb") as f:
+                            file_bytes = f.read()
+                        
+                        mime_type = "text/csv" if selected_preset.endswith(".csv") else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        files = {"file": (selected_preset, file_bytes, mime_type)}
+                        
+                        response = requests.post(f"{API_BASE_URL}/api/v1/upload", files=files)
+                        if response.status_code == 200:
+                            res_data = response.json()
+                            st.success(f"🎉 範例資料集 [{selected_preset}] 解析完成！報告已成功儲存至雲端資料庫。")
+                            
+                            col1, col2, col3, col4 = st.columns(4)
+                            health_score = res_data["quality_report"]["health_score"]
+                            duplicate_rows = res_data["quality_report"]["duplicate_rows"]
+                            total_rows = res_data["metadata"]["total_rows"]
+                            total_cols = res_data["metadata"]["total_columns"]
+                            
+                            col1.metric("Health Score (健康分數)", f"{health_score} / 100")
+                            col2.metric("總列數 (Total Rows)", total_rows)
+                            col3.metric("總欄數 (Total Columns)", total_cols)
+                            col4.metric("重複列數 (Duplicates)", duplicate_rows)
+                            
+                            st.info(f"審計紀錄編號 (Audit ID): {res_data['audit_id']}")
+                        else:
+                            st.error(f"API 回傳錯誤 ({response.status_code}): {response.text}")
+                    except Exception as e:
+                        st.error(f"無法讀取預設範例檔案或連線後端: {str(e)}")
+    else:
+        st.info("提示：專案目錄下未發現 demo_datasets 資料夾，請先建立該資料夾並放入測試 CSV 檔案。")
+
+    st.markdown("---")
     
     if uploaded_files:
         st.write(f"📁 已選擇 **{len(uploaded_files)}** 個檔案待檢測。")
