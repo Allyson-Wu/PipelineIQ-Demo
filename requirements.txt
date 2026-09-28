@@ -8,3 +8,6 @@ openpyxl
 supabase
 python-multipart
 python-dotenv
+streamlit
+requests
+plotly
