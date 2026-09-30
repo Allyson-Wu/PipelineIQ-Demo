@@ -24,7 +24,7 @@ page = st.sidebar.radio("Select a Module:", ["Upload", "History"]) #請選擇操
 
 # ==================== 分頁 1：單檔與批次檢測 ====================
 if page == "Upload":
-    st.header("資料品質檢測 (支援單檔與批次檢測)") #📤 資料品質檢測 (支援單檔與批次檢測)
+    st.header("Data Quality Audit (Single & Batch File Support)") #📤 資料品質檢測 (支援單檔與批次檢測)
     
     # accept_multiple_files=True 可同時支援單選與多選檔案
     uploaded_files = st.file_uploader(
