@@ -15,28 +15,28 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("📊 PipelineIQ - 資料品質檢測平台")
-st.caption("無程式碼自動化資料健康度檢查與歷史稽核系統")
+st.title("PipelineIQ - Data Quality & Intelligence Platform") #📊 PipelineIQ - 資料品質檢測平台
+st.caption("No-Code Automated Data Health Checks & Audit History System") #無程式碼自動化資料健康度檢查與歷史稽核系統
 
 # 側邊欄選單
-st.sidebar.title("功能導覽")
-page = st.sidebar.radio("請選擇操作項目：", ["單檔與批次檢測 (Upload)", "歷史審計紀錄 (History)"])
+st.sidebar.title("Navigation") #功能導覽
+page = st.sidebar.radio("Select a Module:", ["Upload", "History"]) #請選擇操作項目：", ["單檔與批次檢測 (Upload)", "歷史審計紀錄 (History)
 
 # ==================== 分頁 1：單檔與批次檢測 ====================
-if page == "單檔與批次檢測 (Upload)":
-    st.header("📤 資料品質檢測 (支援單檔與批次檢測)")
+if page == "Upload":
+    st.header("資料品質檢測 (支援單檔與批次檢測)") #📤 資料品質檢測 (支援單檔與批次檢測)
     
     # accept_multiple_files=True 可同時支援單選與多選檔案
     uploaded_files = st.file_uploader(
-        "請選擇要檢測的檔案 (.csv, .xlsx, .xls)，可一次選擇多個檔案：", 
+        "Choose file(s) to audit (.csv, .xlsx, .xls)，Multiple files supported:", #請選擇要檢測的檔案，可一次選擇多個檔案 
         type=["csv", "xlsx", "xls"],
         accept_multiple_files=True
     )
 
     # ==================== Day 19 新增：預設公開範例資料集 (Preset Demo Datasets) ====================
     st.markdown("---")
-    st.subheader("💡 或是直接選擇內建公開範例資料集 (Preset Public Demo Datasets)")
-    st.caption("供招募官與評審免下載檔案、一鍵直接測試平台品質檢測能力")
+    st.subheader("Or select from Preset Public Demo Datasets") #或是直接選擇內建公開範例資料集 (Preset Public Demo Datasets)
+    st.caption("Instantly test data quality checks with pre-loaded datasets without downloading files") #供使用者免下載檔案、一鍵直接測試平台品質檢測能力
 
     DEMO_DIR = "demo_datasets"
     preset_files = []
@@ -44,12 +44,12 @@ if page == "單檔與批次檢測 (Upload)":
         preset_files = [f for f in os.listdir(DEMO_DIR) if f.endswith(('.csv', '.xlsx', '.xls'))]
 
     if preset_files:
-        selected_preset = st.selectbox("請選擇預載資料集：", ["-- 請選擇範例檔案 --"] + preset_files)
+        selected_preset = st.selectbox("Select a preset dataset：", ["-- Select a demo file --"] + preset_files) #請選擇預載資料集：", ["-- 請選擇範例檔案 -
         
-        if selected_preset != "-- 請選擇範例檔案 --":
-            if st.button(f"🚀 載入並分析 [{selected_preset}]", type="secondary"):
+        if selected_preset != "-- Select a demo file --":
+            if st.button(f"Load & Audit [{selected_preset}]", type="secondary"): #🚀 載入並分析
                 preset_path = os.path.join(DEMO_DIR, selected_preset)
-                with st.spinner("正在讀取範例資料集並送往 Data Quality Engine 解析中..."):
+                with st.spinner("Reading dataset and sending to Data Quality Engine..."): #正在讀取範例資料集並送往 Data Quality Engine 解析中...
                     try:
                         with open(preset_path, "rb") as f:
                             file_bytes = f.read()
@@ -60,7 +60,7 @@ if page == "單檔與批次檢測 (Upload)":
                         response = requests.post(f"{API_BASE_URL}/api/v1/upload", files=files)
                         if response.status_code == 200:
                             res_data = response.json()
-                            st.success(f"🎉 範例資料集 [{selected_preset}] 解析完成！報告已成功儲存至雲端資料庫。")
+                            st.success(f"Demo dataset[{selected_preset}] parsed successfully! Audit report saved to Cloud DB.") #🎉 範例資料集 [{selected_preset}] 解析完成！報告已成功儲存至雲端資料庫。
 
                             # 1. 核心指標卡片
                             col1, col2, col3, col4 = st.columns(4)
@@ -69,15 +69,15 @@ if page == "單檔與批次檢測 (Upload)":
                             total_rows = res_data["metadata"]["total_rows"]
                             total_cols = res_data["metadata"]["total_columns"]
                             
-                            col1.metric("Health Score (健康分數)", f"{health_score} / 100")
-                            col2.metric("總列數 (Total Rows)", total_rows)
-                            col3.metric("總欄數 (Total Columns)", total_cols)
-                            col4.metric("重複列數 (Duplicates)", duplicate_rows)
+                            col1.metric("Health Score", f"{health_score} / 100")
+                            col2.metric("Total Rows", total_rows)
+                            col3.metric("Total Columns", total_cols)
+                            col4.metric("Duplicates", duplicate_rows)
 
                             st.divider()
 
                             # 2. Plotly 視覺化圖表
-                            st.subheader("📈 品質視覺化分析 (Quality Visualizations)")
+                            st.subheader("Quality Visualizations") #📈 品質視覺化分析 (Quality Visualizations)
                             chart_col1, chart_col2 = st.columns(2)
                             
                             # 圖表 1：Health Score 半圓形儀表盤
@@ -111,8 +111,8 @@ if page == "單檔與批次檢測 (Upload)":
                                     df_null_chart, 
                                     x="Column", 
                                     y="Null Ratio (%)",
-                                    title="各欄位缺失率分布 (%)",
-                                    labels={"Column": "欄位名稱", "Null Ratio (%)": "缺失率 (%)"},
+                                    title="Null Ratio Distribution by Column (%)", #各欄位缺失率分布 (%)
+                                    labels={"Column": "Column Name", "Null Ratio (%)": "Null Ratio (%)"}, # Null Ratio: 缺失率
                                     color="Null Ratio (%)",
                                     color_continuous_scale="Reds"
                                 )
@@ -122,41 +122,41 @@ if page == "單檔與批次檢測 (Upload)":
                             st.divider()
                             
                             # 3. 缺失值詳細表格
-                            st.subheader("📋 缺失值統計 (Null Counts & Ratios)")
+                            st.subheader("Null Counts & Ratios")
                             null_counts = res_data["quality_report"]["null_counts"]
                             
                             df_nulls = pd.DataFrame({
-                                "欄位名稱": list(null_counts.keys()),
-                                "缺失值筆數": list(null_counts.values()),
-                                "缺失值比例": [f"{r*100:.2f}%" for r in null_ratios.values()]
+                                "Column Name": list(null_counts.keys()),
+                                "Null Count": list(null_counts.values()),
+                                "Null Ratio": [f"{r*100:.2f}%" for r in null_ratios.values()]
                             })
                             st.dataframe(df_nulls, use_container_width=True)
                             
-                            st.info(f"審計紀錄編號 (Audit ID): {res_data['audit_id']}")
+                            st.info(f"Audit ID: {res_data['audit_id']}")
                         else:
-                            st.error(f"API 回傳錯誤 ({response.status_code}): {response.text}")
+                            st.error(f"API Error ({response.status_code}): {response.text}")
                     except Exception as e:
-                        st.error(f"無法讀取預設範例檔案或連線後端: {str(e)}")
+                        st.error(f"Failed to read preset dataset or connect to backend: {str(e)}")
     else:
-        st.info("提示：專案目錄下未發現 demo_datasets 資料夾，請先建立該資料夾並放入測試 CSV 檔案。")
+        st.info("Notice: demo_datasets directory not found. Please create the folder and add sample CSV files.")
 
     st.markdown("---")
     
     if uploaded_files:
-        st.write(f"📁 已選擇 **{len(uploaded_files)}** 個檔案待檢測。")
+        st.write(f"**{len(uploaded_files)}** file(s) selected for audit.")
         
-        if st.button("🚀 開始執行品質檢測", type="primary"):
+        if st.button("Run Data Quality Audit", type="primary"):
             # -------------------- 模式 A：單一檔案上傳 (呈現 Day 12 完整詳細視覺化) --------------------
             if len(uploaded_files) == 1:
                 uploaded_file = uploaded_files[0]
-                with st.spinner("正在將檔案送往 Data Quality Engine 解析中..."):
+                with st.spinner("Sending file to Data Quality Engine..."):
                     try:
                         files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
                         response = requests.post(f"{API_BASE_URL}/api/v1/upload", files=files)
                         
                         if response.status_code == 200:
                             res_data = response.json()
-                            st.success("檢測完成！報告已成功儲存至雲端資料庫。")
+                            st.success("Audit complete! Report successfully saved to Cloud DB.") #檢測完成！報告已成功儲存至雲端資料庫。
                             
                             # 顯示核心指標卡片
                             col1, col2, col3, col4 = st.columns(4)
@@ -166,15 +166,15 @@ if page == "單檔與批次檢測 (Upload)":
                             total_rows = res_data["metadata"]["total_rows"]
                             total_cols = res_data["metadata"]["total_columns"]
                             
-                            col1.metric("Health Score (健康分數)", f"{health_score} / 100")
-                            col2.metric("總列數 (Total Rows)", total_rows)
-                            col3.metric("總欄數 (Total Columns)", total_cols)
-                            col4.metric("重複列數 (Duplicates)", duplicate_rows)
+                            col1.metric("Health Score", f"{health_score} / 100")
+                            col2.metric("Total Rows", total_rows)
+                            col3.metric("Total Columns", total_cols)
+                            col4.metric("Duplicates", duplicate_rows)
                             
                             st.divider()
                             
                             # Plotly 視覺化圖表
-                            st.subheader("📈 品質視覺化分析 (Quality Visualizations)")
+                            st.subheader("Quality Visualizations")
                             chart_col1, chart_col2 = st.columns(2)
                             
                             # 圖表 1：Health Score 半圓形儀表盤
@@ -208,8 +208,8 @@ if page == "單檔與批次檢測 (Upload)":
                                     df_null_chart, 
                                     x="Column", 
                                     y="Null Ratio (%)",
-                                    title="各欄位缺失率分布 (%)",
-                                    labels={"Column": "欄位名稱", "Null Ratio (%)": "缺失率 (%)"},
+                                    title="Null Ratio Distribution by Column (%)",
+                                    labels={"Column": "Null Ratio Distribution by Column", "Null Ratio (%)": "Null Ratio (%)"},
                                     color="Null Ratio (%)",
                                     color_continuous_scale="Reds"
                                 )
@@ -219,21 +219,21 @@ if page == "單檔與批次檢測 (Upload)":
                             st.divider()
                             
                             # 缺失值詳細表格
-                            st.subheader("📋 缺失值統計 (Null Counts & Ratios)")
+                            st.subheader("Null Counts & Ratios")
                             null_counts = res_data["quality_report"]["null_counts"]
                             
                             df_nulls = pd.DataFrame({
-                                "欄位名稱": list(null_counts.keys()),
-                                "缺失值筆數": list(null_counts.values()),
-                                "缺失值比例": [f"{r*100:.2f}%" for r in null_ratios.values()]
+                                "File Name": list(null_counts.keys()),
+                                "Null Counts": list(null_counts.values()),
+                                "Null Ratios": [f"{r*100:.2f}%" for r in null_ratios.values()]
                             })
                             st.dataframe(df_nulls, use_container_width=True)
                             
-                            st.info(f"審計紀錄編號 (Audit ID): {res_data['audit_id']}")
+                            st.info(f"Audit ID: {res_data['audit_id']}")
                         else:
-                            st.error(f"API 回傳錯誤 ({response.status_code}): {response.text}")
+                            st.error(f"API Error ({response.status_code}): {response.text}")
                     except Exception as e:
-                        st.error(f"無法連線至後端服務: {str(e)}")
+                        st.error(f"Unable to connect to backend service: {str(e)}")
 
             # -------------------- 模式 B：多檔案批次上傳 (Day 16 新增批次摘要) --------------------
             else:
@@ -243,7 +243,7 @@ if page == "單檔與批次檢測 (Upload)":
                 batch_summary = []
                 
                 for index, file_obj in enumerate(uploaded_files):
-                    status_text.text(f"⏳ 正在分析第 ({index+1}/{len(uploaded_files)}) 個檔案: {file_obj.name}...")
+                    status_text.text(f"⏳ Analyzing file ({index+1}/{len(uploaded_files)}): {file_obj.name}...")
                     try:
                         files = {"file": (file_obj.name, file_obj.getvalue(), file_obj.type)}
                         response = requests.post(f"{API_BASE_URL}/api/v1/upload", files=files)
@@ -252,36 +252,36 @@ if page == "單檔與批次檢測 (Upload)":
                             res_data = response.json()
                             success_count += 1
                             batch_summary.append({
-                                "檔案名稱": file_obj.name,
+                                "File Name": file_obj.name,
                                 "Health Score": res_data["quality_report"]["health_score"],
-                                "總列數": res_data["metadata"]["total_rows"],
-                                "總欄數": res_data["metadata"]["total_columns"],
-                                "重複列數": res_data["quality_report"]["duplicate_rows"],
+                                "Total Rows": res_data["metadata"]["total_rows"],
+                                "Total Columns": res_data["metadata"]["total_columns"],
+                                "Duplicate Rows": res_data["quality_report"]["duplicate_rows"],
                                 "Audit ID": res_data["audit_id"]
                             })
                         else:
-                            st.error(f"❌ 檔案 {file_obj.name} 檢測失敗 ({response.status_code}): {response.text}")
+                            st.error(f"❌ File {file_obj.name} Audit Failed ({response.status_code}): {response.text}")
                     except Exception as e:
-                        st.error(f"❌ 檔案 {file_obj.name} 連線失敗: {str(e)}")
+                        st.error(f"❌ File {file_obj.name} Connection Failed: {str(e)}")
                     
                     progress_bar.progress((index + 1) / len(uploaded_files))
                 
-                status_text.text("🎉 所有檔案批次檢測完成！")
-                st.success(f"成功處理 {success_count} / {len(uploaded_files)} 個檔案，報告已儲存至雲端資料庫。")
+                status_text.text("Batch processing complete!")
+                st.success(f"Successfully processed {success_count} / {len(uploaded_files)} file(s). Reports stored in Cloud DB.")
                 
                 if batch_summary:
-                    st.subheader("📋 本次批次檢測摘要 (Batch Summary)")
+                    st.subheader("Batch Summary") #📋 本次批次檢測摘要 (Batch Summary)
                     df_batch = pd.DataFrame(batch_summary)
                     st.dataframe(df_batch, use_container_width=True)
 
 # ==================== 分頁 2：歷史審計紀錄 (Day 13 新增品質趨勢折線圖) ====================
-elif page == "歷史審計紀錄 (History)":
-    st.header("📜 歷史審計紀錄 (Audit History)")
+elif page == "History":
+    st.header("Audit History")
     
-    if st.button("重新整理歷史資料"):
+    if st.button("Refresh Audit Logs"):
         st.rerun()
         
-    with st.spinner("正在載入歷史審計清單..."):
+    with st.spinner("Loading audit logs..."):
         try:
             response = requests.get(f"{API_BASE_URL}/api/v1/audits")
             if response.status_code == 200:
@@ -289,11 +289,11 @@ elif page == "歷史審計紀錄 (History)":
                 audits = res_data.get("data", [])
                 
                 if audits:
-                    st.write(f"目前資料庫共儲存 **{res_data.get('count', 0)}** 筆審計紀錄：")
+                    st.write(f"Total**{res_data.get('count', 0)}** audit record(s) stored in database：")
                     df_audits = pd.DataFrame(audits)
 
                     # ==================== Day 13 新增：品質趨勢折線圖 ====================
-                    st.subheader("📈 歷史 Health Score 變化趨勢 (Quality Trend)")
+                    st.subheader("Quality Trend")
                     
                     # 確保 health_score 與時間欄位轉型正確，避開歷史空資料報錯
                     df_audits["health_score_num"] = pd.to_numeric(df_audits.get("health_score", 0), errors="coerce").fillna(0.0)
@@ -308,8 +308,8 @@ elif page == "歷史審計紀錄 (History)":
                         y="health_score_num",
                         markers=True,
                         text="health_score_num",
-                        title="歷次資料審計 Health Score 走勢圖",
-                        labels={"created_at_dt": "審計時間 (Time)", "health_score_num": "健康分數 (Health Score)"},
+                        title="Historical Health Score Trend",
+                        labels={"created_at_dt": "Time", "health_score_num": "Health Score"},
                         hover_data=[c for c in ["file_name", "total_rows", "duplicate_rows"] if c in df_audits_sorted.columns]
                     )
                     
@@ -331,11 +331,11 @@ elif page == "歷史審計紀錄 (History)":
                     # 調整顯示欄位名稱
                     df_audits_display = df_audits.rename(columns={
                         "id": "Audit ID",
-                        "file_name": "檔案名稱",
-                        "total_rows": "總列數",
-                        "total_columns": "總欄數",
-                        "health_score": "健康分數",
-                        "created_at": "檢測時間"
+                        "file_name": "file name",
+                        "total_rows": "total rows",
+                        "total_columns": "total columns",
+                        "health_score": "health score",
+                        "created_at": "created at"
                     })
                     
                     # 排除內部繪圖用的臨時欄位再展示表格
@@ -344,7 +344,7 @@ elif page == "歷史審計紀錄 (History)":
 
                     # ==================== Day 18 新增：單筆歷史紀錄調閱與下載 ====================
                     st.divider()
-                    st.subheader("🔍 單筆審計報告調閱與 JSON 匯出 (Report Export)")
+                    st.subheader("Audit Report Drill-Down & JSON Export") #🔍 單筆審計報告調閱與 JSON 匯出 (Report Export)
 
                     # 建立選單選單選項列表 (格式: "檔案名稱 (Audit ID前8碼)")
                     audit_options = {
@@ -352,12 +352,12 @@ elif page == "歷史審計紀錄 (History)":
                         for record in audits
                     }
 
-                    selected_option = st.selectbox("請選擇要調閱與匯出的審計紀錄：", list(audit_options.keys()))
+                    selected_option = st.selectbox("Select an audit record to inspect and export:", list(audit_options.keys()))
 
                     if selected_option:
                         selected_audit = audit_options[selected_option]
 
-                        with st.expander("📋 檢視選定紀錄之完整 JSON 日誌 (JSON Log)", expanded=True):
+                        with st.expander("JSON Log", expanded=True): #📋 檢視選定紀錄之完整 JSON 日誌 (JSON Log)
                             st.json(selected_audit)
 
                         # 一鍵下載 JSON 按鈕
@@ -366,7 +366,7 @@ elif page == "歷史審計紀錄 (History)":
                         file_name_clean = str(selected_audit.get("file_name", "report")).replace(".", "_")
 
                         st.download_button(
-                            label="📥 下載此筆 JSON 審計報告",
+                            label="Download JSON Audit Report",
                             data=json_str,
                             file_name=f"audit_report_{file_name_clean}_{file_id_short}.json",
                             mime="application/json",
@@ -374,8 +374,8 @@ elif page == "歷史審計紀錄 (History)":
                         )
 
                 else:
-                    st.warning("目前資料庫中無任何審計紀錄。")
+                    st.warning("No audit records found in database.")
             else:
-                st.error(f"無法取得歷史紀錄 ({response.status_code}): {response.text}")
+                st.error(f"Failed to retrieve audit logs ({response.status_code}): {response.text}")
         except Exception as e:
-            st.error(f"無法連線至後端服務: {str(e)}")
+            st.error(f"Unable to connect to backend service: {str(e)}")
